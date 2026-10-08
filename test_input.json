@@ -1,0 +1,2 @@
+{"input": {"run_id": "local-test", "inputs": {}, "outputs": {"out": {"max_bytes": 20000000}}, "r2": false,
+           "params": {"mode": "fallback", "out_bytes": 9000000, "seed": 1}}}

@@ -1,0 +1,25 @@
+{
+  "name": "r2smoke",
+  "repo": "romingodelfuego/fakinflu-r2smoke-worker",
+  "visibility": "private",
+  "description": "fakinflu RunPod serverless worker: Phase 0 smoke tests (R2 presigned URLs, /stream, chunked fallback). CPU only, no model.",
+  "license": "code only, no third-party model",
+  "endpoint": {
+    "name": "fakinflu-r2smoke-worker",
+    "env_var": "RUNPOD_R2SMOKE_ENDPOINT_ID",
+    "compute": "CPU",
+    "cpu_flavor": "cpu3c-2-4",
+    "gpu_pools": [],
+    "workers": {
+      "min": 0,
+      "max": 5,
+      "idleTimeout": 5
+    },
+    "timeout_ms": 900000,
+    "flashboot": "FLASHBOOT",
+    "disk_gb": 10,
+    "env": {},
+    "notes": "cpu3c 2 vCPU serverless : 0,036 $/vCPU/h (catalogue RunPod lu le 2026-10-08) = 0,072 $/h. max 5 workers : le smoke test (d) verifie que le 5e job reste dans la file LOCALE (limite 4), pas chez RunPod.",
+    "price_per_h": 0.072
+  }
+}
