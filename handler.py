@@ -7,15 +7,15 @@ Handler GENERATEUR : chaque `yield` est lisible en direct via GET /stream/<job_i
 params.mode :
   roundtrip  (a, e) lit l'entree "src" (URL GET pre-signee), produit "out" de out_bytes octets,
                     la depose via l'URL PUT + outputs.json ; delay_s avant la sortie pour (e)
-  preview    (b)    progress x steps puis un apercu de preview_bytes octets
-  fallback   (c)    produit "out" sans R2 -> morceaux de 4 Mo dans le stream
+  preview    (b)    progress x steps puis un apercu de preview_bytes octets (<= 1 Mio)
+  fallback   (c)    produit "out" sans R2 -> morceaux de 1 Mio dans le stream
   sleep      (d)    occupe un worker seconds secondes (test de parallelisme)
 """
-import base64, hashlib, os, shutil, tempfile, time, traceback
+import hashlib, os, shutil, tempfile, time, traceback
 
 import runpod
 
-from transfer import Outputs, fetch_inputs
+from transfer import Outputs, fetch_inputs, preview_event
 
 
 def _blob(path, size, seed):
@@ -46,8 +46,8 @@ def handler(job):
             for i in range(steps):
                 time.sleep(float(params.get("step_s", 1)))
                 yield {"type": "progress", "step": f"etape {i + 1}/{steps}", "pct": round(100 * (i + 1) / steps)}
-            data = os.urandom(int(params.get("preview_bytes", 3_000_000)))
-            yield {"type": "preview", "mime": "application/octet-stream", "data": base64.b64encode(data).decode()}
+            data = os.urandom(int(params.get("preview_bytes", 1_000_000)))
+            yield preview_event(data, "application/octet-stream")
         elif mode == "sleep":
             secs = float(params.get("seconds", 60))
             end = time.time() + secs

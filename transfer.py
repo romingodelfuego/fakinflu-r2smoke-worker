@@ -9,12 +9,15 @@ PUT pour les sorties). Ne jamais journaliser une URL : c'est un jeton au porteur
 
 Entree d'un fichier  : {"b64", "name", "bytes", "sha256"}  ou  {"url", "name", "bytes", "sha256"}
 Sortie attendue      : {"put_url", "key", "max_bytes"}     ou  {"max_bytes"} (sans R2)
-Evenements produits  : file (inline | r2), chunk / chunk_end (repli), input_read.
+Evenements produits  : file (inline | r2), chunk / chunk_end (repli, 1 Mio), input_read, preview (<= 1 Mio).
 """
 import base64, hashlib, json, os, urllib.request
 
 INLINE_MAX_B64 = 7 * 1024 * 1024
-CHUNK_BYTES = 4 * 1024 * 1024
+# Mesure du 2026-10-08 : RunPod SUPPRIME SANS ERREUR un evenement /stream de ~2,7 Mo serialise
+# (1,87 Mo passe). Morceaux et apercus plafonnes a 1 Mio brut (~1,4 Mo en base64).
+CHUNK_BYTES = 1024 * 1024
+MAX_EVENT_RAW = 1024 * 1024
 _IO = 1024 * 1024
 
 
@@ -22,8 +25,10 @@ def b64_len(n):
     return 4 * ((n + 2) // 3)
 
 
-def route_for(n, r2_available):
-    if b64_len(n) < INLINE_MAX_B64:
+def route_for(n, r2_available, direction="input"):
+    """input : dans le corps de /run (< 7 Mo en base64). output : dans un evenement /stream (<= 1 Mio)."""
+    small = b64_len(n) < INLINE_MAX_B64 if direction == "input" else n <= MAX_EVENT_RAW
+    if small:
         return "inline"
     return "r2" if r2_available else "stream_fallback"
 
@@ -38,6 +43,13 @@ def sha256_file(path):
 
 def _safe(name):
     return "".join(c if c.isalnum() or c in "._-" else "_" for c in os.path.basename(name or "file"))
+
+
+def preview_event(data, mime, **extra):
+    """Apercu leger pour l'UI ; None (et rien d'emis) s'il depasse la taille sure d'un evenement."""
+    if len(data) > MAX_EVENT_RAW:
+        return {"type": "progress", "step": f"apercu ignore ({len(data)} octets > {MAX_EVENT_RAW})"}
+    return {"type": "preview", "mime": mime, "data": base64.b64encode(data).decode(), **extra}
 
 
 def fetch_input(role, spec, dest_dir):
@@ -107,7 +119,7 @@ class Outputs:
         if max_bytes is not None and size > max_bytes:
             # PUT pre-signe ne borne pas la taille cote R2 : c'est le worker qui refuse (plan 0.6)
             raise ValueError(f"sortie {role} : {size} octets > {max_bytes} annonces")
-        route = route_for(size, self.r2 and "put_url" in spec)
+        route = route_for(size, self.r2 and "put_url" in spec, "output")
         if route == "inline":
             with open(path, "rb") as f:
                 data = base64.b64encode(f.read()).decode()

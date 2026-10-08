@@ -12,14 +12,14 @@
     "gpu_pools": [],
     "workers": {
       "min": 0,
-      "max": 5,
+      "max": 3,
       "idleTimeout": 5
     },
     "timeout_ms": 900000,
     "flashboot": "FLASHBOOT",
     "disk_gb": 10,
     "env": {},
-    "notes": "cpu3c 2 vCPU serverless : 0,036 $/vCPU/h (catalogue RunPod lu le 2026-10-08) = 0,072 $/h. max 5 workers : le smoke test (d) verifie que le 5e job reste dans la file LOCALE (limite 4), pas chez RunPod.",
+    "notes": "cpu3c 2 vCPU serverless : 0,036 $/vCPU/h (catalogue RunPod lu le 2026-10-08) = 0,072 $/h. max 3 workers : au test (d), 4 jobs sont admis par la file locale (le 4e attend chez RunPod), le 5e attend dans la file LOCALE (limite 4).",
     "price_per_h": 0.072
   }
 }
