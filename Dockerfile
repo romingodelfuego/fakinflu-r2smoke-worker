@@ -5,5 +5,5 @@ FROM python:3.11-slim
 ENV PIP_NO_CACHE_DIR=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 RUN pip install "runpod==1.7.*"
-COPY transfer.py handler.py /app/
+COPY transfer.py handler.py VERSION* /app/
 CMD ["python3", "-u", "handler.py"]
