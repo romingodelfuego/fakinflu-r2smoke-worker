@@ -15,7 +15,7 @@ import hashlib, os, shutil, tempfile, time, traceback
 
 import runpod
 
-from transfer import Outputs, fetch_inputs, preview_event
+from transfer import Outputs, fetch_inputs, preview_event, version_event
 
 
 def _blob(path, size, seed):
@@ -34,6 +34,7 @@ def handler(job):
     mode = params.get("mode", "roundtrip")
     work = tempfile.mkdtemp(prefix="smoke_")
     t0 = time.time()
+    yield version_event("r2smoke")  # toujours en premier : le client verifie la version de l'image
     try:
         outputs = Outputs(inp)
         paths, events = fetch_inputs(inp, os.path.join(work, "in"), outputs)
